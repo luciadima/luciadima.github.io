@@ -204,7 +204,7 @@ layout: default
 
   {% if page.last_modified_at %}
   <footer>
-    <p class="updated">Last updated: {{ page.last_modified_at | date: "%B %d, %Y" }}</p>
+    <p class="updated">Ultima actualizare: {{ page.last_modified_at | date: "%d %B %Y" }}</p>
   </footer>
   {% endif %}
 </article>

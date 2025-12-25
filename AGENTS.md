@@ -39,6 +39,8 @@ blog/
 | **Node.js** (≥18) | Runtime | https://nodejs.org |
 | **Pandoc** | Word → Markdown conversion | `brew install pandoc` |
 | **LibreOffice** | EMF/WMF → PNG conversion | `brew install --cask libreoffice` |
+| **ImageMagick** | Image trimming (removes whitespace) | `brew install imagemagick` |
+| **Ruby** (Homebrew) | Local Jekyll testing | `brew install ruby` |
 
 ### npm Dependencies
 
@@ -189,10 +191,12 @@ All fields are optional. Missing fields use auto-detected values.
 
 Word equations are converted to MathML, rendered by MathJax:
 
-- Inline: `$formula$`
-- Block: `$$formula$$`
+- Inline: `$formula$` → converted to `<span class="math inline">\(...\)</span>`
+- Block: `$$formula$$` → converted to `<div class="math display">\[...\]</div>`
 
-The Jekyll site includes MathJax 3 for rendering.
+The Jekyll site includes MathJax 3 configured in `_layouts/default.html`.
+
+**Important:** Math is wrapped in HTML tags to prevent kramdown from processing the content (kramdown strips curly braces like `{CH}` thinking they're attributes).
 
 ### Chemical Structure Support (ISIS Draw)
 
@@ -201,6 +205,10 @@ EMF/WMF files (Windows metafiles) embedded in Word documents are automatically c
 - ISIS Draw chemical structures
 - ChemDraw objects
 - Other OLE-embedded graphics
+
+**Post-processing:** After LibreOffice conversion, ImageMagick trims whitespace from PNGs using `magick -trim +repage`.
+
+**CSS scaling:** Images are displayed at 125% scale for better readability (configurable in `style.css`).
 
 ### Git-Based Metadata
 
@@ -266,6 +274,37 @@ Ensure the Jekyll site includes MathJax (already configured in `_layouts/default
 
 ### Images not displaying
 Check that image paths in markdown reference `/assets/images/` not temp directories.
+
+### Kramdown stripping curly braces in math (e.g., `{CH}` disappears)
+Math content must be wrapped in HTML tags (`<span class="math inline">` or `<div class="math display">`) to prevent kramdown from processing the content. The converter does this automatically.
+
+### Liquid syntax errors with `{{`
+Chemistry formulas like `{{KMnO}_{4}}` trigger Jekyll's Liquid templating. The generator escapes these by adding a space: `{ {KMnO}`.
+
+### Numbered lists all showing as "1."
+Markdown numbered lists break when content between items isn't indented. The converter transforms numbered items into `### N. **Title**` headings instead.
+
+### Ruby gem installation fails (permission denied)
+Use Homebrew Ruby instead of system Ruby:
+```bash
+brew install ruby
+export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
+```
+
+### Images have excessive whitespace
+EMF→PNG conversion via LibreOffice adds whitespace. ImageMagick trims it:
+```bash
+magick image.png -trim +repage image.png
+```
+
+## Known Pandoc Artifacts (Auto-Cleaned)
+
+The converter automatically cleans these Pandoc output issues:
+
+- `\...` escaped dots → converted to regular `...`
+- `<!-- -->` HTML comments → removed
+- `>` blockquote markers → removed (Word indentation often converts to blockquotes)
+- Lines without proper breaks → trailing spaces added for markdown line breaks
 
 ## Future Enhancements
 
