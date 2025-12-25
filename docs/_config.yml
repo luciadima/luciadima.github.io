@@ -1,0 +1,26 @@
+# Jekyll configuration for GitHub Pages
+title: "My Blog"
+description: "A blog powered by Word documents and GitHub Pages"
+baseurl: ""
+url: ""
+
+# Build settings
+markdown: kramdown
+kramdown:
+  math_engine: mathjax
+  parse_block_html: false
+  parse_span_html: false
+
+# Plugins (supported by GitHub Pages)
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+# MathJax for math formulas
+mathjax: true
+
+# Exclude from processing
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock

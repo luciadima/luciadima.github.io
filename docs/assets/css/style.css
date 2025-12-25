@@ -1,0 +1,113 @@
+/* Basic blog styling */
+:root {
+  --primary-color: #2c3e50;
+  --text-color: #333;
+  --background-color: #fff;
+  --border-color: #eee;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  line-height: 1.6;
+  color: var(--text-color);
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: var(--background-color);
+}
+
+header nav {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 2rem;
+}
+
+header nav a {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+main {
+  min-height: 60vh;
+}
+
+article.post header h1 {
+  margin-bottom: 0.5rem;
+  color: var(--primary-color);
+}
+
+article.post .meta {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 2rem;
+}
+
+article.post .content {
+  line-height: 1.8;
+}
+
+article.post .content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1rem auto;
+}
+
+article.post .content h2,
+article.post .content h3 {
+  margin-top: 2rem;
+  color: var(--primary-color);
+}
+
+article.post footer {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.85rem;
+  color: #666;
+}
+
+footer {
+  margin-top: 3rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+  color: #666;
+}
+
+/* Post list on index */
+.post-list {
+  list-style: none;
+  padding: 0;
+}
+
+.post-list li {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.post-list a {
+  font-size: 1.2rem;
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.post-list a:hover {
+  text-decoration: underline;
+}
+
+.post-list .date {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+/* MathJax overrides */
+.MathJax {
+  font-size: 1.1em !important;
+}
