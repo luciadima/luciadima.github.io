@@ -40,7 +40,7 @@ function convertEmfToPng(emfPath: string): { success: boolean; pngPath?: string;
     if (fs.existsSync(pngPath)) {
       // Remove the original EMF file
       fs.unlinkSync(emfPath);
-      
+
       // Trim whitespace from the PNG using ImageMagick
       try {
         spawnSync('magick', [
@@ -52,7 +52,7 @@ function convertEmfToPng(emfPath: string): { success: boolean; pngPath?: string;
       } catch {
         // Trimming failed, but we still have the PNG
       }
-      
+
       return { success: true, pngPath };
     } else {
       return { success: false, error: result.stderr || 'Conversion failed - PNG not created' };
