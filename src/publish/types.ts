@@ -24,6 +24,10 @@ export interface PostMetadata {
 export interface MetadataOverride {
   /** Override the title extracted from the document */
   title?: string;
+  /** Override the creation date (format: YYYY-MM-DD) */
+  createdDate?: string;
+  /** Override the author */
+  author?: string;
   /** Categories/tags for the post */
   categories?: string[];
   /** Set to false to mark as draft */

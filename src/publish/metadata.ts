@@ -57,12 +57,21 @@ export function buildPostMetadata(
   // Create slug from the title
   const slug = slugify(title);
 
+  // Parse createdDate override if provided
+  let createdDate = gitInfo.createdDate;
+  if (override?.createdDate) {
+    const parsed = new Date(override.createdDate);
+    if (!isNaN(parsed.getTime())) {
+      createdDate = parsed;
+    }
+  }
+
   return {
     slug,
     title,
-    createdDate: gitInfo.createdDate,
+    createdDate,
     modifiedDate: gitInfo.modifiedDate,
-    author: gitInfo.author,
+    author: override?.author || gitInfo.author,
     categories: override?.categories || [],
     published: override?.published !== false, // Default to published
   };
