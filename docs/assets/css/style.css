@@ -55,8 +55,11 @@ article.post .content {
 article.post .content img {
   max-width: 100%;
   height: auto;
-  display: block;
-  margin: 1rem auto;
+  display: inline-block;
+  margin: 0.5rem 0;
+  vertical-align: middle;
+  transform: scale(1.25);
+  transform-origin: left center;
 }
 
 article.post .content h2,
@@ -110,4 +113,24 @@ footer {
 /* MathJax overrides */
 .MathJax {
   font-size: 1.1em !important;
+}
+
+/* Force left alignment for all content */
+.math.display,
+.math.inline,
+mjx-container {
+  text-align: left !important;
+  display: inline !important;
+}
+
+mjx-container[display="true"] {
+  display: block !important;
+  text-align: left !important;
+  margin: 1em 0 !important;
+}
+
+/* Ensure paragraphs and content are left-aligned */
+article.post .content p,
+article.post .content div {
+  text-align: left;
 }
