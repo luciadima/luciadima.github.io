@@ -48,13 +48,13 @@ function escapeLiquidSyntax(markdown: string): string {
   // LaTeX uses {\command but Liquid uses {{variable}}
   // We need to escape {{ when it appears in chemistry notation like {{KMnO}_{4}}
   let result = markdown;
-  
+
   // Escape {{ when followed by a letter or backslash-space (chemistry patterns)
   // But NOT when followed by \ and then a LaTeX command like \frac
   result = result.replace(/\{\{([A-Za-z])/g, '{ {$1');
   result = result.replace(/\{\{\\(\s)/g, '{ {\\$1');  // {{ followed by backslash-space
   result = result.replace(/\{%/g, '{ %');
-  
+
   return result;
 }
 
@@ -65,16 +65,16 @@ function escapeLiquidSyntax(markdown: string): string {
 function fixImagePaths(markdown: string, slug: string, tempMediaDir: string): string {
   // Replace paths like ./temp/media/image1.png with /assets/images/slug/image1.png
   const mediaPath = path.join(tempMediaDir, 'media').replace(/\\/g, '/');
-  
+
   // Handle both relative and absolute temp paths
   let result = markdown;
-  
+
   // Replace the temp media path with Jekyll assets path
   result = result.replace(
     new RegExp(escapeRegExp(mediaPath), 'g'),
     `/assets/images/${slug}`
   );
-  
+
   // Also handle just "media/" paths that pandoc might generate
   result = result.replace(
     /!\[([^\]]*)\]\(media\//g,
@@ -148,7 +148,7 @@ exclude:
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ page.title }} | {{ site.title }}</title>
   <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
-  
+
   <!-- MathJax for math formulas -->
   <script>
     MathJax = {
@@ -170,11 +170,11 @@ exclude:
       <a href="{{ '/' | relative_url }}">{{ site.title }}</a>
     </nav>
   </header>
-  
+
   <main>
     {{ content }}
   </main>
-  
+
   <footer>
     <p>&copy; {{ 'now' | date: "%Y" }} {{ site.title }}</p>
   </footer>
@@ -197,11 +197,11 @@ layout: default
       {% if page.author %} • {{ page.author }}{% endif %}
     </p>
   </header>
-  
+
   <div class="content">
     {{ content }}
   </div>
-  
+
   {% if page.last_modified_at %}
   <footer>
     <p class="updated">Last updated: {{ page.last_modified_at | date: "%B %d, %Y" }}</p>
@@ -368,7 +368,7 @@ export function generatePost(
   const imagesDir = path.join(outputPath, 'assets', 'images', metadata.slug);
   if (images.length > 0) {
     fs.mkdirSync(imagesDir, { recursive: true });
-    
+
     // Copy images
     for (const image of images) {
       const imagePath = path.join(imagesDir, image.filename);
@@ -378,7 +378,7 @@ export function generatePost(
 
   // Fix image paths in markdown
   const fixedMarkdown = fixImagePaths(markdown, metadata.slug, tempMediaDir);
-  
+
   // Escape Liquid syntax (chemistry formulas use {{ }})
   const escapedMarkdown = escapeLiquidSyntax(fixedMarkdown);
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * Blog Publisher - Main CLI
- * 
+ *
  * Converts Word documents from /documente to Jekyll posts in /docs
- * 
+ *
  * Usage:
  *   npm run publish          # Convert all documents and generate site
  *   npm run publish -- init  # Initialize Jekyll site structure only
@@ -12,11 +12,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { 
-  convertDocxToMarkdown, 
-  isPandocAvailable, 
+import {
+  convertDocxToMarkdown,
+  isPandocAvailable,
   slugify,
-  extractTitleFromMarkdown 
+  extractTitleFromMarkdown
 } from './converter.js';
 import { buildPostMetadata } from './metadata.js';
 import { initJekyllSite, generatePost, cleanPosts } from './generator.js';
@@ -113,7 +113,7 @@ async function publish(config: PublisherConfig): Promise<void> {
       );
 
       console.log(`     ✅ Generated: ${path.basename(postPath)}`);
-      
+
       if (result.images.length > 0) {
         console.log(`     📷 Extracted ${result.images.length} image(s)`);
       }

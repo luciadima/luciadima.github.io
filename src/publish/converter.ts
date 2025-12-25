@@ -27,7 +27,7 @@ function convertEmfToPng(emfPath: string): { success: boolean; pngPath?: string;
   const dir = path.dirname(emfPath);
   const baseName = path.basename(emfPath, path.extname(emfPath));
   const pngPath = path.join(dir, `${baseName}.png`);
-  
+
   try {
     // Use LibreOffice to convert EMF to PNG directly
     const result = spawnSync('soffice', [
@@ -63,7 +63,7 @@ export function isPandocAvailable(): boolean {
 
 /**
  * Convert a Word document to Markdown using Pandoc
- * 
+ *
  * @param docxPath - Path to the .docx file
  * @param mediaDir - Directory to extract images to
  * @returns Conversion result with markdown and extracted images
@@ -93,7 +93,7 @@ export async function convertDocxToMarkdown(
 
   return new Promise((resolve, reject) => {
     const pandoc = spawn('pandoc', args);
-    
+
     let stdout = '';
     let stderr = '';
 
@@ -118,13 +118,13 @@ export async function convertDocxToMarkdown(
       // Find extracted images
       const mediaPath = path.join(mediaDir, 'media');
       const hasLibreOffice = isLibreOfficeAvailable();
-      
+
       if (fs.existsSync(mediaPath)) {
         const files = fs.readdirSync(mediaPath);
         for (let file of files) {
           let filePath = path.join(mediaPath, file);
           let ext = path.extname(file).toLowerCase();
-          
+
           // Convert EMF/WMF files to PNG if LibreOffice is available
           if ((ext === '.emf' || ext === '.wmf') && hasLibreOffice) {
             const convResult = convertEmfToPng(filePath);
@@ -138,12 +138,12 @@ export async function convertDocxToMarkdown(
               warnings.push(`Failed to convert ${file}: ${convResult.error}`);
             }
           }
-          
+
           // Re-read file after potential conversion
           if (!fs.existsSync(filePath)) continue;
-          
+
           const data = fs.readFileSync(filePath);
-          
+
           let mimeType = 'application/octet-stream';
           if (ext === '.png') mimeType = 'image/png';
           else if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
@@ -165,36 +165,36 @@ export async function convertDocxToMarkdown(
 
       // Fix image paths in markdown to be relative to assets folder
       let markdown = stdout;
-      
+
       // Remove blockquote markers (> at start of lines)
       // Word documents often get incorrectly converted to blockquotes
       markdown = markdown.replace(/^>\s?/gm, '');
-      
+
       // Clean up Pandoc artifacts
       // Remove escaped dots (ellipsis) - convert \... to regular dots
       markdown = markdown.replace(/\\\.{3}/g, '...');
       markdown = markdown.replace(/\\\./g, '.');
-      
+
       // Remove raw HTML comments from Pandoc
       markdown = markdown.replace(/`<!-- -->`\{=html\}/g, '');
       markdown = markdown.replace(/<!-- -->/g, '');
-      
+
       // Ensure blank line after inline math that ends a line (prevents MathJax from bleeding into next line)
       markdown = markdown.replace(/\$\n([A-Za-z])/g, '$\n\n$1');
-      
+
       // Wrap math in HTML tags that kramdown won't process
       // This prevents kramdown from stripping curly braces like {CH}
-      
+
       // First convert display math $$...$$ to HTML div
       markdown = markdown.replace(/\$\$([^$]+)\$\$/g, '<div class="math display">\\[$1\\]</div>');
-      
+
       // Then convert inline math $...$ to HTML span (but not $$)
       markdown = markdown.replace(/(?<!\$)\$(?!\$)([^$]+)(?<!\$)\$(?!\$)/g, '<span class="math inline">\\($1\\)</span>');
-      
+
       // Add line breaks (two spaces before newline) for lines that should stay separate
       // Lines starting with numbers followed by text should have proper breaks before them
       markdown = markdown.replace(/\n(\d+[^\d\.])/g, '  \n$1');
-      
+
       // Convert numbered lists to use proper sequential numbering and headings
       // Replace markdown lists with bold headings to avoid kramdown list-breaking issues
       let questionNumber = 0;
@@ -202,7 +202,7 @@ export async function convertDocxToMarkdown(
         questionNumber++;
         return `### ${questionNumber}. **`;
       });
-      
+
       // Replace media paths with Jekyll-friendly paths
       // Pandoc outputs: ![](mediaDir/media/image1.png)
       // We want: ![](/assets/images/POST_SLUG/image1.png)

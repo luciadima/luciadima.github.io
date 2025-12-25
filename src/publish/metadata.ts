@@ -41,19 +41,19 @@ export function buildPostMetadata(
   markdownContent: string
 ): PostMetadata {
   const baseName = path.basename(docPath, '.docx');
-  
+
   // Get git info
   const gitInfo = getGitFileInfo(docPath);
-  
+
   // Load any metadata overrides
   const override = loadMetadataOverride(metadataDir, path.basename(docPath));
-  
+
   // Extract title from document content, or use filename
   const extractedTitle = extractTitleFromMarkdown(markdownContent);
-  
+
   // Determine final title (priority: override > extracted > filename)
   const title = override?.title || extractedTitle || baseName;
-  
+
   // Create slug from the title
   const slug = slugify(title);
 
