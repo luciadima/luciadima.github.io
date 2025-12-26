@@ -451,7 +451,7 @@ mjx-container[display="true"] {
   .footer-col-wrapper {
     flex-direction: column;
   }
-  
+
   .footer-col-1,
   .footer-col-2,
   .footer-col-3 {
@@ -459,7 +459,7 @@ mjx-container[display="true"] {
     max-width: 100%;
     margin-bottom: var(--spacing-unit);
   }
-  
+
   .site-nav {
     position: absolute;
     top: 9px;
@@ -471,7 +471,7 @@ mjx-container[display="true"] {
   .post-title {
     font-size: 2rem;
   }
-  
+
   .post-link {
     font-size: 1.25rem;
   }
