@@ -1,9 +1,9 @@
 ---
 layout: post
-title: "Probleme Supersimple de Chimie Organică"
+title: "Probleme de Chimie Organică"
 date: 2025-12-24T00:00:00.000Z
-last_modified_at: 2025-12-25T10:27:33.000Z
-author: "Lucia Dima"
+last_modified_at: 2025-12-26T15:27:00.145Z
+author: "Unknown"
 categories: ["chimie", "educație"]
 ---
 
@@ -414,7 +414,7 @@ Rezolvare: <span class="math inline">\(C_{6}H_{6} + {CH}_{2} = {CH}_{2}\overset{
 
 ### 46. **Ce cantitate de izopropilbenzen se obține prin alchilarea a 468 g benzen cu propenă?**
 
-Rezolvare: ![](/assets/images/probleme-supersimple-de-chimie-organica/image1.png)
+Rezolvare: ![](/assets/images/probleme-de-chimie-organica/image1.png)
 
 <span class="math inline">\(C_{6}H_{6} + {CH}_{2} = CH - {CH}_{3}\overset{ {AlCl}_{3}}{\rightarrow}C_{6}H_{5} - CH{({CH}_{3})}_{2}\)</span>
 
@@ -428,7 +428,7 @@ Rezolvare: ![](/assets/images/probleme-supersimple-de-chimie-organica/image1.png
 
 Rezolvare:
 
-![](/assets/images/probleme-supersimple-de-chimie-organica/image2.png)
+![](/assets/images/probleme-de-chimie-organica/image2.png)
 
 <div class="math display">\[C_{6}H_{6} + {CH}_{3} - CO - Cl\overset{ {AlCl}_{3}}{\rightarrow}C_{6}H_{5} - CO - {CH}_{3}\]</div>
 
@@ -466,7 +466,7 @@ Rezolvare: <span class="math inline">\(C_{6}H_{5} - {CH}_{3} + 3\lbrack O\rbrack
 
 Rezolvare:
 
-![](/assets/images/probleme-supersimple-de-chimie-organica/image3.png)
+![](/assets/images/probleme-de-chimie-organica/image3.png)
 
 <div class="math display">\[\ C_{6}H_{12} \rightarrow C_{6}H_{6} + {3H}_{2}\]</div>
 
@@ -478,7 +478,7 @@ Rezolvare:
 
 <div class="math display">\[Rezolvare:\]</div>
 
-![](/assets/images/probleme-supersimple-de-chimie-organica/image4.png)
+![](/assets/images/probleme-de-chimie-organica/image4.png)
 
 <div class="math display">\[\ C_{6}H_{11} - {CH}_{3} \rightarrow C_{6}H_{5} - {CH}_{3} + \ 3H_{2}\]</div>
 
@@ -1038,7 +1038,7 @@ Rezolvare:
 
 Rezolvare:
 
-![](/assets/images/probleme-supersimple-de-chimie-organica/image5.png){width="7.036231408573928in" height="2.1805522747156605in"}
+![](/assets/images/probleme-de-chimie-organica/image5.png){width="7.036231408573928in" height="2.1805522747156605in"}
 
 <span class="math inline">\({94\ g\ C}_{6}H_{5} - OH\ldots\ldots\ldots\ldots\ldots\ldots\ldots\ldots\ldots\ldots.229\ gC_{6}H_{3}N_{3}O_{7}\)</span>
 

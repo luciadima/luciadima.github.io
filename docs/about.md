@@ -1,15 +1,11 @@
 ---
 layout: default
-title: About
+title: Despre
 permalink: /about/
 ---
 
-# About
+# Despre
 
-This is the base Jekyll theme. You can find out more info about customizing your Jekyll theme, as well as basic Jekyll usage documentation at [jekyllrb.com](https://jekyllrb.com/)
+Acest blog a fost creat pentru facilitarea învățării chimiei la nivel liceal și a biochimiei la nivel pre-universitar și universitar.
 
-You can find the source code for Jekyll at GitHub:
-[jekyll][jekyll-organization] /
-[jekyll](https://github.com/jekyll/jekyll)
-
-[jekyll-organization]: https://github.com/jekyll
+Creat de **Dr. Lucia Dima**.
