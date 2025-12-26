@@ -1,8 +1,14 @@
 # Jekyll configuration for GitHub Pages
-title: "My Blog"
-description: "A blog powered by Word documents and GitHub Pages"
+title: "Your awesome title"
+description: "Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description."
 baseurl: ""
 url: ""
+author: "GitHub User"
+email: "your-email@domain.com"
+
+# Social links (shown in footer)
+github_username: ""
+twitter_username: ""
 
 # Build settings
 markdown: kramdown
@@ -10,6 +16,7 @@ kramdown:
   math_engine: mathjax
   parse_block_html: false
   parse_span_html: false
+  syntax_highlighter: rouge
 
 # Plugins (supported by GitHub Pages)
 plugins:

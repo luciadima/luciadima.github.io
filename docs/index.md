@@ -2,13 +2,22 @@
 layout: default
 title: Home
 ---
-<h1>{{ site.title }}</h1>
+<div class="home">
+  <h1 class="page-heading">Posts</h1>
 
-<ul class="post-list">
-{% for post in site.posts %}
-  <li>
-    <span class="date">{{ post.date | date: "%Y-%m-%d" }}</span>
-    <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
-  </li>
-{% endfor %}
-</ul>
+  <ul class="post-list">
+    {% for post in site.posts %}
+    <li>
+      <span class="post-meta">{{ post.date | date: "%b %-d, %Y" }}</span>
+      <h2>
+        <a class="post-link" href="{{ post.url | relative_url }}">{{ post.title | escape }}</a>
+      </h2>
+      {% if post.summary %}
+      <p class="post-excerpt">{{ post.summary }}</p>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+
+  <p class="rss-subscribe">subscribe <a href="{{ '/feed.xml' | relative_url }}">via RSS</a></p>
+</div>
