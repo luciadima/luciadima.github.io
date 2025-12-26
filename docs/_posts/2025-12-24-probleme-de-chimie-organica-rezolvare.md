@@ -2,8 +2,8 @@
 layout: post
 title: "Probleme de Chimie Organică - Rezolvare"
 date: 2025-12-24T00:00:00.000Z
-last_modified_at: 2025-12-26T15:38:00.587Z
-author: "Unknown"
+last_modified_at: 2025-12-26T15:39:40.000Z
+author: "Lucia Dima"
 categories: ["chimie", "educație"]
 ---
 

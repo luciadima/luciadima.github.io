@@ -71,7 +71,7 @@ export function buildPostMetadata(
     title,
     createdDate,
     modifiedDate: gitInfo.modifiedDate,
-    author: override?.author || gitInfo.author,
+    author: 'Lucia Dima',
     categories: override?.categories || [],
     published: override?.published !== false, // Default to published
   };

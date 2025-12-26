@@ -2,7 +2,7 @@
 layout: post
 title: "Probleme de Chimie Organică"
 date: 2025-12-23T00:00:00.000Z
-last_modified_at: 2025-12-26T15:27:41.000Z
+last_modified_at: 2025-12-26T15:39:44.000Z
 author: "Lucia Dima"
 categories: ["chimie", "educație"]
 ---
