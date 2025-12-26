@@ -1,6 +1,6 @@
 # Jekyll configuration for GitHub Pages
 title: "Your awesome title"
-description: "Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description."
+description: ""
 baseurl: ""
 url: ""
 author: "GitHub User"
@@ -20,7 +20,6 @@ kramdown:
 
 # Plugins (supported by GitHub Pages)
 plugins:
-  - jekyll-feed
   - jekyll-seo-tag
 
 # MathJax for math formulas
