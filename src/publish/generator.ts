@@ -420,6 +420,46 @@ export function cleanPosts(outputPath: string): void {
 }
 
 /**
+ * Generate a Jekyll post that embeds a PDF file
+ */
+export function generatePdfPost(
+  outputPath: string,
+  metadata: PostMetadata,
+  pdfAssetPath: string
+): string {
+  // Create post filename: YYYY-MM-DD-slug.md
+  const dateStr = formatDateForFilename(metadata.createdDate);
+  const filename = `${dateStr}-${metadata.slug}.md`;
+  const postPath = path.join(outputPath, '_posts', filename);
+
+  // Generate front matter
+  const frontMatter = generateFrontMatter(metadata);
+
+  // Create content with embedded PDF
+  const postContent = `${frontMatter}
+
+<div class="pdf-container">
+  <embed src="${pdfAssetPath}" type="application/pdf" width="100%" height="800px" />
+</div>
+
+<p class="pdf-download">
+  <a href="${pdfAssetPath}" download>📥 Descarcă PDF</a>
+</p>
+`;
+
+  // Ensure _posts directory exists
+  const postsDir = path.join(outputPath, '_posts');
+  if (!fs.existsSync(postsDir)) {
+    fs.mkdirSync(postsDir, { recursive: true });
+  }
+
+  // Write post file
+  fs.writeFileSync(postPath, postContent, 'utf-8');
+
+  return postPath;
+}
+
+/**
  * Generate a Jekyll post in quick mode (reusing existing images)
  */
 export function generatePostQuick(

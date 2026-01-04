@@ -10,13 +10,16 @@ import { extractTitleFromMarkdown, slugify } from './converter.js';
 
 /**
  * Load metadata override from JSON file if it exists
+ * Supports both .docx and .pdf base names
  */
 export function loadMetadataOverride(
   metadataDir: string,
   docFilename: string
 ): MetadataOverride | null {
-  // Try exact filename match (without .docx extension)
-  const baseName = path.basename(docFilename, '.docx');
+  // Try exact filename match (without extension)
+  let baseName = path.basename(docFilename);
+  // Remove common extensions
+  baseName = baseName.replace(/\.(docx|pdf)$/i, '');
   const jsonPath = path.join(metadataDir, `${baseName}.json`);
 
   if (fs.existsSync(jsonPath)) {
@@ -101,4 +104,45 @@ export function saveMetadataOverride(
   const baseName = path.basename(docFilename, '.docx');
   const jsonPath = path.join(metadataDir, `${baseName}.json`);
   fs.writeFileSync(jsonPath, JSON.stringify(metadata, null, 2), 'utf-8');
+}
+
+/**
+ * Build post metadata from a PDF file (no content extraction needed)
+ */
+export function buildPostMetadataFromPdf(
+  pdfPath: string,
+  metadataDir: string
+): PostMetadata {
+  const baseName = path.basename(pdfPath, '.pdf');
+
+  // Get git info
+  const gitInfo = getGitFileInfo(pdfPath);
+
+  // Load any metadata overrides
+  const override = loadMetadataOverride(metadataDir, path.basename(pdfPath));
+
+  // Determine final title (priority: override > filename)
+  const title = override?.title || baseName;
+
+  // Create slug from the title
+  const slug = slugify(title);
+
+  // Parse createdDate override if provided
+  let createdDate = gitInfo.createdDate;
+  if (override?.createdDate) {
+    const parsed = new Date(override.createdDate);
+    if (!isNaN(parsed.getTime())) {
+      createdDate = parsed;
+    }
+  }
+
+  return {
+    slug,
+    title,
+    createdDate,
+    modifiedDate: gitInfo.modifiedDate,
+    author: 'Lucia Dima',
+    categories: override?.categories || [],
+    published: override?.published !== false,
+  };
 }

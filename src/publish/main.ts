@@ -2,26 +2,19 @@
 /**
  * Blog Publisher - Main CLI
  *
- * Converts Word documents from /documente to Jekyll posts in /docs
+ * Publishes PDF documents from /documente as Jekyll blog posts
  *
  * Usage:
- *   npm run publish              # Convert all documents and generate site
- *   npm run publish -- --quick   # Quick mode: reuse existing images (faster)
+ *   npm run publish              # Publish all PDF documents
  *   npm run publish -- init      # Initialize Jekyll site structure only
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
-  convertDocxToMarkdown,
-  convertDocxToMarkdownOnly,
-  isPandocAvailable,
-  slugify,
-  extractTitleFromMarkdown
-} from './converter.js';
-import { buildPostMetadata } from './metadata.js';
-import { initJekyllSite, generatePost, generatePostQuick, cleanPosts } from './generator.js';
+import { slugify } from './converter.js';
+import { buildPostMetadataFromPdf } from './metadata.js';
+import { initJekyllSite, generatePdfPost, cleanPosts } from './generator.js';
 import { getRepoRoot } from './git-utils.js';
 import type { PublisherConfig } from './types.js';
 
@@ -30,9 +23,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
- * Find all Word documents in the documents folder
+ * Find all PDF documents in the documents folder
  */
-function findDocuments(documentsPath: string): string[] {
+function findPdfDocuments(documentsPath: string): string[] {
   if (!fs.existsSync(documentsPath)) {
     console.error(`❌ Documents folder not found: ${documentsPath}`);
     return [];
@@ -40,28 +33,16 @@ function findDocuments(documentsPath: string): string[] {
 
   const files = fs.readdirSync(documentsPath);
   return files
-    .filter(f => f.toLowerCase().endsWith('.docx') && !f.startsWith('~$'))
+    .filter(f => f.toLowerCase().endsWith('.pdf'))
     .map(f => path.join(documentsPath, f));
 }
 
 /**
- * Main publishing function
+ * Main publishing function for PDFs
  */
-async function publish(config: PublisherConfig, quickMode: boolean = false): Promise<void> {
-  console.log('📚 Blog Publisher');
-  console.log('==================');
-  if (quickMode) {
-    console.log('⚡ Quick mode: reusing existing images');
-  }
-  console.log('');
-
-  // Check pandoc
-  if (!isPandocAvailable()) {
-    console.error('❌ Pandoc is not installed. Please install it:');
-    console.error('   brew install pandoc');
-    process.exit(1);
-  }
-  console.log('✅ Pandoc found\n');
+async function publishPdfs(config: PublisherConfig): Promise<void> {
+  console.log('📚 Blog Publisher (PDF Mode)');
+  console.log('============================\n');
 
   // Initialize Jekyll site if needed
   if (!fs.existsSync(path.join(config.outputPath, '_config.yml'))) {
@@ -70,84 +51,51 @@ async function publish(config: PublisherConfig, quickMode: boolean = false): Pro
     console.log('');
   }
 
-  // Find documents
-  const documents = findDocuments(config.documentsPath);
+  // Find PDF documents
+  const documents = findPdfDocuments(config.documentsPath);
   if (documents.length === 0) {
-    console.log('📭 No Word documents found in', config.documentsPath);
+    console.log('📭 No PDF documents found in', config.documentsPath);
     return;
   }
 
-  console.log(`📄 Found ${documents.length} document(s):\n`);
+  console.log(`📄 Found ${documents.length} PDF document(s):\n`);
 
   // Clean existing posts for full regeneration
   cleanPosts(config.outputPath);
 
-  // Create temp directory for media extraction (only needed in full mode)
-  const tempDir = path.join(config.outputPath, '.temp');
-  if (!quickMode) {
-    fs.mkdirSync(tempDir, { recursive: true });
-  }
+  // Create PDFs directory in assets
+  const pdfsDir = path.join(config.outputPath, 'assets', 'pdfs');
+  fs.mkdirSync(pdfsDir, { recursive: true });
 
-  // Process each document
+  // Process each PDF
   let successCount = 0;
   let errorCount = 0;
 
-  for (const docPath of documents) {
-    const docName = path.basename(docPath);
-    console.log(`  📝 Processing: ${docName}`);
+  for (const pdfPath of documents) {
+    const pdfName = path.basename(pdfPath);
+    console.log(`  📝 Processing: ${pdfName}`);
 
     try {
-      // Build metadata first to get the slug
-      const quickMarkdown = await convertDocxToMarkdownOnly(docPath);
-      const metadata = buildPostMetadata(
-        docPath,
-        config.metadataPath,
-        quickMarkdown
+      // Build metadata from PDF filename and metadata override
+      const metadata = buildPostMetadataFromPdf(
+        pdfPath,
+        config.metadataPath
       );
 
-      // Check if images already exist for this post
-      const existingImagesDir = path.join(config.outputPath, 'assets', 'images', metadata.slug);
-      const hasExistingImages = fs.existsSync(existingImagesDir) &&
-        fs.readdirSync(existingImagesDir).length > 0;
+      // Copy PDF to assets folder
+      const pdfDestName = `${metadata.slug}.pdf`;
+      const pdfDest = path.join(pdfsDir, pdfDestName);
+      fs.copyFileSync(pdfPath, pdfDest);
 
-      if (quickMode && hasExistingImages) {
-        // Quick mode: just regenerate markdown, reuse existing images
-        const postPath = generatePostQuick(
-          config.outputPath,
-          metadata,
-          quickMarkdown,
-          metadata.slug
-        );
+      // Generate Jekyll post with embedded PDF
+      const postPath = generatePdfPost(
+        config.outputPath,
+        metadata,
+        `/assets/pdfs/${pdfDestName}`
+      );
 
-        console.log(`     ✅ Generated: ${path.basename(postPath)}`);
-        console.log(`     ⚡ Reused existing images`);
-      } else {
-        // Full mode: extract images
-        const docTempDir = path.join(tempDir, slugify(docName));
-        fs.mkdirSync(docTempDir, { recursive: true });
-
-        const result = await convertDocxToMarkdown(docPath, docTempDir);
-
-        const postPath = generatePost(
-          config.outputPath,
-          metadata,
-          result.markdown,
-          result.images,
-          docTempDir
-        );
-
-        console.log(`     ✅ Generated: ${path.basename(postPath)}`);
-
-        if (result.images.length > 0) {
-          console.log(`     📷 Extracted ${result.images.length} image(s)`);
-        }
-
-        if (result.warnings.length > 0) {
-          for (const warning of result.warnings) {
-            console.log(`     ⚠️  ${warning}`);
-          }
-        }
-      }
+      console.log(`     ✅ Generated: ${path.basename(postPath)}`);
+      console.log(`     📎 PDF: /assets/pdfs/${pdfDestName}`);
 
       successCount++;
     } catch (error) {
@@ -156,11 +104,8 @@ async function publish(config: PublisherConfig, quickMode: boolean = false): Pro
     }
   }
 
-  // Clean up temp directory
-  fs.rmSync(tempDir, { recursive: true, force: true });
-
   // Summary
-  console.log('\n==================');
+  console.log('\n============================');
   console.log(`✅ Published: ${successCount}`);
   if (errorCount > 0) {
     console.log(`❌ Errors: ${errorCount}`);
@@ -198,16 +143,15 @@ async function main(): Promise<void> {
 
   // Parse command
   const args = process.argv.slice(2);
-  const quickMode = args.includes('--quick') || args.includes('-q');
   const command = args.find(arg => !arg.startsWith('-'));
 
   if (command === 'init') {
     console.log('🔧 Initializing Jekyll site structure...');
     initJekyllSite(config);
-    console.log('\n✅ Done! You can now add Word documents to /documente and run:');
+    console.log('\n✅ Done! You can now add PDF documents to /documente and run:');
     console.log('   npm run publish');
   } else {
-    await publish(config, quickMode);
+    await publishPdfs(config);
   }
 }
 
@@ -216,3 +160,33 @@ main().catch((error) => {
   console.error('Fatal error:', error);
   process.exit(1);
 });
+
+
+/* =============================================================================
+ * COMMENTED OUT: Original DOCX to HTML conversion code
+ * =============================================================================
+ *
+ * import {
+ *   convertDocxToMarkdown,
+ *   convertDocxToMarkdownOnly,
+ *   isPandocAvailable,
+ * } from './converter.js';
+ * import { generatePost, generatePostQuick } from './generator.js';
+ *
+ * function findDocuments(documentsPath: string): string[] {
+ *   if (!fs.existsSync(documentsPath)) {
+ *     console.error(`❌ Documents folder not found: ${documentsPath}`);
+ *     return [];
+ *   }
+ *   const files = fs.readdirSync(documentsPath);
+ *   return files
+ *     .filter(f => f.toLowerCase().endsWith('.docx') && !f.startsWith('~$'))
+ *     .map(f => path.join(documentsPath, f));
+ * }
+ *
+ * async function publish(config: PublisherConfig, quickMode: boolean = false): Promise<void> {
+ *   // ... original DOCX processing code ...
+ * }
+ *
+ * =============================================================================
+ */

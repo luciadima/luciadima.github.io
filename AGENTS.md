@@ -1,25 +1,25 @@
 # Blog Publishing System
 
-A TypeScript-based publishing system that converts Word documents (.docx) to a Jekyll blog hosted on GitHub Pages. Designed for non-technical users who want to write in Word and publish to the web.
+A TypeScript-based publishing system that embeds PDF documents into a Jekyll blog hosted on GitHub Pages. Designed for non-technical users who want to publish PDF documents to the web.
 
 ## Architecture Overview
 
 ```
 blog/
-├── documente/              # User content - Word documents go here
+├── documente/              # User content - PDF files go here
 ├── metadata/               # Optional JSON metadata overrides
 ├── docs/                   # Generated Jekyll site (GitHub Pages output)
 │   ├── _posts/            # Generated markdown blog posts
 │   ├── _layouts/          # Jekyll templates
 │   ├── assets/
 │   │   ├── css/           # Stylesheets
-│   │   └── images/        # Extracted images from Word docs
+│   │   └── pdfs/          # PDF files served to users
 │   ├── _config.yml        # Jekyll configuration
 │   ├── Gemfile            # Ruby dependencies for local testing
 │   └── index.md           # Homepage
 ├── src/publish/           # TypeScript source code
 │   ├── main.ts            # CLI entry point
-│   ├── converter.ts       # Pandoc wrapper, EMF→PNG conversion
+│   ├── converter.ts       # Slug utilities (legacy DOCX conversion commented out)
 │   ├── generator.ts       # Jekyll site generator
 │   ├── git-utils.ts       # Git metadata extraction
 │   ├── metadata.ts        # Metadata loading and merging
@@ -37,9 +37,6 @@ blog/
 | Tool | Purpose | Installation |
 |------|---------|--------------|
 | **Node.js** (≥18) | Runtime | https://nodejs.org |
-| **Pandoc** | Word → Markdown conversion | `brew install pandoc` |
-| **LibreOffice** | EMF/WMF → PNG conversion | `brew install --cask libreoffice` |
-| **ImageMagick** | Image trimming (removes whitespace) | `brew install imagemagick` |
 | **Ruby** (Homebrew) | Local Jekyll testing | `brew install ruby` |
 
 ### npm Dependencies
@@ -57,41 +54,20 @@ npm install
 # Build TypeScript
 npm run build
 
-# Publish documents (full rebuild - extracts all images, slow)
+# Publish PDF documents
 npm run publish
-
-# Quick rebuild (reuses existing images, fast)
-npm run quick
 
 # Development mode (run without building)
 npm run dev
 ```
 
-### CLI Flags
-
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--quick` | `-q` | Quick mode: skip image extraction, reuse existing images |
-| `init` | | Initialize Jekyll site structure only |
-
-**When to use quick mode:**
-- Editing text content in Word documents (no new images)
-- Fixing typos or formatting
-- Testing markdown conversion changes
-
-**When to use full publish:**
-- Adding new Word documents
-- Adding or changing images in existing documents
-- First-time setup
-
 ## Workflow
 
 ### For Non-Technical Users
 
-1. **Add documents**: Place `.docx` files in `documente/`
-2. **Commit changes**: `git add . && git commit -m "Add new post"`
-3. **Publish**: `npm run publish`
-4. **Deploy**: `git push`
+1. **Add documents**: Place `.pdf` files in `documente/`
+2. **Publish**: `npm run publish`
+3. **Deploy**: `git add . && git commit -m "Add new post" && git push`
 
 ### For Technical Users
 
@@ -107,38 +83,30 @@ Defines TypeScript interfaces:
 
 - `PostMetadata` - Complete post metadata (slug, title, dates, author, categories)
 - `MetadataOverride` - Optional JSON overrides (title, categories, published, summary)
-- `ConversionResult` - Pandoc conversion output (markdown, images, warnings)
-- `ExtractedImage` - Image data extracted from Word docs
 - `GitFileInfo` - Git history information (created date, modified date, author)
 - `PublisherConfig` - Publisher configuration paths
 
 ### src/publish/main.ts
 
-CLI entry point. Orchestrates the publishing workflow:
+CLI entry point. Orchestrates the PDF publishing workflow:
 
-1. Checks for Pandoc availability
-2. Initializes Jekyll site if needed
-3. Finds all `.docx` files in `documente/`
-4. Processes each document through the conversion pipeline
-5. Generates Jekyll posts with front matter
-6. Cleans up temporary files
+1. Initializes Jekyll site if needed
+2. Finds all `.pdf` files in `documente/`
+3. Copies PDFs to `docs/assets/pdfs/`
+4. Generates Jekyll posts with embedded PDF viewer
+5. Outputs summary of published posts
+
+**Key functions:**
+- `findPdfDocuments(dir)` - Recursively finds all PDF files
+- `publishPdfs(config)` - Main publishing orchestrator
 
 ### src/publish/converter.ts
 
-Handles Word document conversion:
+Utility functions:
 
-- `isPandocAvailable()` - Checks if Pandoc is installed
-- `isLibreOfficeAvailable()` - Checks if LibreOffice is installed
-- `convertDocxToMarkdown(docxPath, mediaDir)` - Converts .docx to Markdown using Pandoc (full mode with image extraction)
-- `convertDocxToMarkdownOnly(docxPath)` - Converts .docx to Markdown without extracting images (quick mode)
-- `convertEmfToPng(emfPath)` - Converts Windows metafiles (ISIS Draw, etc.) to PNG
-- `extractTitleFromMarkdown(markdown)` - Extracts first heading as title
-- `slugify(text)` - Creates URL-friendly slugs
+- `slugify(text)` - Creates URL-friendly slugs from filenames
 
-**Pandoc options used:**
-- `--extract-media` - Extracts embedded images
-- `--wrap=none` - No line wrapping
-- `--mathml` - Converts math formulas to MathML (MathJax compatible)
+*(Legacy DOCX conversion functions are commented out but preserved)*
 
 ### src/publish/git-utils.ts
 
@@ -155,24 +123,22 @@ Uses `git log --follow` to track file history even after renames.
 Manages metadata from multiple sources:
 
 - `loadMetadataOverride(metadataDir, docFilename)` - Loads JSON override if exists
-- `buildPostMetadata(docPath, metadataDir, markdownContent)` - Merges all metadata sources
-- `generateSampleMetadata(title)` - Creates sample metadata template
-- `saveMetadataOverride(metadataDir, docFilename, metadata)` - Saves metadata to JSON
+- `buildPostMetadataFromPdf(pdfPath, metadataDir)` - Builds metadata for PDF posts
 
 **Metadata priority:**
 1. JSON override (highest)
-2. Extracted from document
-3. Filename (fallback)
+2. Git history (dates)
+3. Filename (fallback for title)
+
+**Default author:** "Lucia Dima" (hardcoded)
 
 ### src/publish/generator.ts
 
 Generates the Jekyll site:
 
 - `initJekyllSite(config)` - Creates Jekyll directory structure and base files
-- `generatePost(outputPath, metadata, markdown, images, tempMediaDir)` - Creates a blog post (full mode)
-- `generatePostQuick(outputPath, metadata, markdown, slug)` - Creates a blog post reusing existing images (quick mode)
+- `generatePdfPost(outputPath, metadata, pdfAssetPath)` - Creates a blog post with embedded PDF
 - `cleanPosts(outputPath)` - Removes existing posts for full regeneration
-- `fixImagePaths(markdown, slug, tempMediaDir)` - Converts temp paths to Jekyll asset paths
 
 **Jekyll front matter generated:**
 ```yaml
@@ -181,24 +147,26 @@ layout: post
 title: "Post Title"
 date: 2025-12-25T10:00:00.000Z
 last_modified_at: 2025-12-25T12:00:00.000Z
-author: "Author Name"
+author: "Lucia Dima"
 categories: ["category1", "category2"]
 ---
 ```
 
+**Post content:** Each post embeds a PDF viewer using `<embed>` tag and includes a download link.
+
 ## Metadata Override Format
 
-Create a JSON file in `metadata/` with the same name as the Word document:
+Create a JSON file in `metadata/` with the same name as the PDF document:
 
 ```
-documente/my-document.docx
+documente/my-document.pdf
 metadata/my-document.json
 ```
 
 **JSON structure:**
 ```json
 {
-  "title": "Custom Title (overrides extracted title)",
+  "title": "Custom Title (overrides filename)",
   "categories": ["chemistry", "education"],
   "published": true,
   "summary": "Optional summary for SEO/previews"
@@ -207,36 +175,15 @@ metadata/my-document.json
 
 All fields are optional. Missing fields use auto-detected values.
 
-## Special Features
+## PDF Embedding
 
-### Math Formula Support
+Each blog post displays:
+1. **Embedded PDF viewer** - Full-width, 800px height using `<embed>` tag
+2. **Download button** - "📥 Descarcă PDF" link for users who prefer to download
 
-Word equations are converted to MathML, rendered by MathJax:
-
-- Inline: `$formula$` → converted to `<span class="math inline">\(...\)</span>`
-- Block: `$$formula$$` → converted to `<div class="math display">\[...\]</div>`
-
-The Jekyll site includes MathJax 3 configured in `_layouts/default.html`.
-
-**Important:** Math is wrapped in HTML tags to prevent kramdown from processing the content (kramdown strips curly braces like `{CH}` thinking they're attributes).
-
-### Chemical Structure Support (ISIS Draw)
-
-EMF/WMF files (Windows metafiles) embedded in Word documents are automatically converted to PNG using LibreOffice. This handles:
-
-- ISIS Draw chemical structures
-- ChemDraw objects
-- Other OLE-embedded graphics
-
-**Post-processing:** After LibreOffice conversion, ImageMagick trims whitespace from PNGs using `magick -trim +repage`.
-
-**CSS scaling:** Images are displayed at 125% scale for better readability (configurable in `style.css`).
-
-### Git-Based Metadata
-
-- **Creation date**: First commit containing the file
-- **Modification date**: Most recent commit modifying the file
-- **Author**: Git author of the first commit
+**CSS classes:**
+- `.pdf-container` - Wrapper with border styling
+- `.pdf-download` - Centered download button with brand colors
 
 ## GitHub Pages Deployment
 
@@ -274,37 +221,12 @@ const config: PublisherConfig = {
   documentsPath: path.join(repoRoot, 'documente'),
   metadataPath: path.join(repoRoot, 'metadata'),
   outputPath: path.join(repoRoot, 'docs'),
-  baseUrl: '',  // Set to '/repo-name' if not using custom domain
-  siteTitle: 'My Blog',
+  baseUrl: '',
+  siteTitle: 'Blog',
 };
 ```
 
 ## Troubleshooting
-
-### "Pandoc not found"
-```bash
-brew install pandoc
-```
-
-### EMF files not converting
-```bash
-brew install --cask libreoffice
-```
-
-### Math formulas not rendering
-Ensure the Jekyll site includes MathJax (already configured in `_layouts/default.html`).
-
-### Images not displaying
-Check that image paths in markdown reference `/assets/images/` not temp directories.
-
-### Kramdown stripping curly braces in math (e.g., `{CH}` disappears)
-Math content must be wrapped in HTML tags (`<span class="math inline">` or `<div class="math display">`) to prevent kramdown from processing the content. The converter does this automatically.
-
-### Liquid syntax errors with `{{`
-Chemistry formulas like `{{KMnO}_{4}}` trigger Jekyll's Liquid templating. The generator escapes these by adding a space: `{ {KMnO}`.
-
-### Numbered lists all showing as "1."
-Markdown numbered lists break when content between items isn't indented. The converter transforms numbered items into `### N. **Title**` headings instead.
 
 ### Ruby gem installation fails (permission denied)
 Use Homebrew Ruby instead of system Ruby:
@@ -313,20 +235,11 @@ brew install ruby
 export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
 ```
 
-### Images have excessive whitespace
-EMF→PNG conversion via LibreOffice adds whitespace. ImageMagick trims it:
-```bash
-magick image.png -trim +repage image.png
-```
+### PDF not displaying in browser
+Some browsers block embedded PDFs. Users can use the download link as fallback.
 
-## Known Pandoc Artifacts (Auto-Cleaned)
-
-The converter automatically cleans these Pandoc output issues:
-
-- `\...` escaped dots → converted to regular `...`
-- `<!-- -->` HTML comments → removed
-- `>` blockquote markers → removed (Word indentation often converts to blockquotes)
-- Lines without proper breaks → trailing spaces added for markdown line breaks
+### Post dates incorrect
+Dates are extracted from Git history. Ensure files are committed before publishing.
 
 ## Future Enhancements
 
@@ -337,3 +250,4 @@ The converter automatically cleans these Pandoc output issues:
 - [ ] Custom themes
 - [ ] RSS feed optimization
 - [ ] Search functionality
+- [ ] PDF thumbnail previews on homepage
