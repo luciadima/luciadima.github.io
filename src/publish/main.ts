@@ -107,7 +107,7 @@ async function publish(config: PublisherConfig, quickMode: boolean = false): Pro
 
       // Check if images already exist for this post
       const existingImagesDir = path.join(config.outputPath, 'assets', 'images', metadata.slug);
-      const hasExistingImages = fs.existsSync(existingImagesDir) && 
+      const hasExistingImages = fs.existsSync(existingImagesDir) &&
         fs.readdirSync(existingImagesDir).length > 0;
 
       if (quickMode && hasExistingImages) {
