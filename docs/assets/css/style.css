@@ -269,6 +269,29 @@ pre > code {
   margin: 1rem 0;
 }
 
+/* Tables */
+.post-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5rem 0;
+}
+
+.post-content table th,
+.post-content table td {
+  border: 1px solid #333;
+  padding: 0.5rem;
+  vertical-align: top;
+}
+
+.post-content table th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+}
+
+.post-content table img {
+  margin: 0.5rem auto;
+}
+
 .post-footer {
   margin-top: 2rem;
   padding-top: 1rem;

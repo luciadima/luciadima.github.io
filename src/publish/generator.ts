@@ -59,7 +59,7 @@ function escapeLiquidSyntax(markdown: string): string {
 }
 
 /**
- * Fix image paths in markdown to point to Jekyll assets folder
+ * Fix image paths in HTML to point to Jekyll assets folder
  * Also converts EMF references to PNG (since EMF files are converted)
  */
 function fixImagePaths(markdown: string, slug: string, tempMediaDir: string): string {
@@ -75,13 +75,22 @@ function fixImagePaths(markdown: string, slug: string, tempMediaDir: string): st
     `/assets/images/${slug}`
   );
 
-  // Also handle just "media/" paths that pandoc might generate
+  // Handle HTML img src attributes with media/ paths
+  // Pandoc HTML output: <img src="media/image1.png" ... />
+  result = result.replace(
+    /src="media\//g,
+    `src="/assets/images/${slug}/`
+  );
+
+  // Also handle Markdown image syntax just in case
   result = result.replace(
     /!\[([^\]]*)\]\(media\//g,
     `![$1](/assets/images/${slug}/`
   );
 
   // Convert .emf references to .png (since we convert EMF files to PNG)
+  result = result.replace(/\.emf"/g, '.png"');
+  result = result.replace(/\.wmf"/g, '.png"');
   result = result.replace(/\.emf\)/g, '.png)');
   result = result.replace(/\.wmf\)/g, '.png)');
 
@@ -408,4 +417,58 @@ export function cleanPosts(outputPath: string): void {
       }
     }
   }
+}
+
+/**
+ * Generate a Jekyll post in quick mode (reusing existing images)
+ */
+export function generatePostQuick(
+  outputPath: string,
+  metadata: PostMetadata,
+  markdown: string,
+  slug: string
+): string {
+  // Create post filename: YYYY-MM-DD-slug.md
+  const dateStr = formatDateForFilename(metadata.createdDate);
+  const filename = `${dateStr}-${metadata.slug}.md`;
+  const postPath = path.join(outputPath, '_posts', filename);
+
+  // Fix image paths - use the existing images directory pattern
+  // Handle HTML img src attributes with media/ paths (Pandoc HTML output)
+  let fixedMarkdown = markdown.replace(
+    /src="media\//g,
+    `src="/assets/images/${slug}/`
+  );
+
+  // Also handle Markdown image syntax
+  fixedMarkdown = fixedMarkdown.replace(
+    /!\[([^\]]*)\]\([^)]*media\/([^)]+)\)/g,
+    `![$1](/assets/images/${slug}/$2)`
+  );
+
+  fixedMarkdown = fixedMarkdown.replace(
+    /!\[([^\]]*)\]\(\.\/[^)]*\/media\/([^)]+)\)/g,
+    `![$1](/assets/images/${slug}/$2)`
+  );
+
+  // Convert .emf/.wmf references to .png
+  fixedMarkdown = fixedMarkdown.replace(/\.emf"/g, '.png"');
+  fixedMarkdown = fixedMarkdown.replace(/\.wmf"/g, '.png"');
+  fixedMarkdown = fixedMarkdown.replace(/\.emf\)/g, '.png)');
+  fixedMarkdown = fixedMarkdown.replace(/\.wmf\)/g, '.png)');
+
+  // Escape Liquid syntax
+  const escapedMarkdown = escapeLiquidSyntax(fixedMarkdown);
+
+  // Generate full post content
+  const frontMatter = generateFrontMatter(metadata);
+  const postContent = `${frontMatter}
+
+${escapedMarkdown}
+`;
+
+  // Write post file
+  fs.writeFileSync(postPath, postContent, 'utf-8');
+
+  return postPath;
 }

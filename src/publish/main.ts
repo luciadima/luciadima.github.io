@@ -5,8 +5,9 @@
  * Converts Word documents from /documente to Jekyll posts in /docs
  *
  * Usage:
- *   npm run publish          # Convert all documents and generate site
- *   npm run publish -- init  # Initialize Jekyll site structure only
+ *   npm run publish              # Convert all documents and generate site
+ *   npm run publish -- --quick   # Quick mode: reuse existing images (faster)
+ *   npm run publish -- init      # Initialize Jekyll site structure only
  */
 
 import fs from 'node:fs';
@@ -14,12 +15,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   convertDocxToMarkdown,
+  convertDocxToMarkdownOnly,
   isPandocAvailable,
   slugify,
   extractTitleFromMarkdown
 } from './converter.js';
 import { buildPostMetadata } from './metadata.js';
-import { initJekyllSite, generatePost, cleanPosts } from './generator.js';
+import { initJekyllSite, generatePost, generatePostQuick, cleanPosts } from './generator.js';
 import { getRepoRoot } from './git-utils.js';
 import type { PublisherConfig } from './types.js';
 
@@ -45,9 +47,13 @@ function findDocuments(documentsPath: string): string[] {
 /**
  * Main publishing function
  */
-async function publish(config: PublisherConfig): Promise<void> {
+async function publish(config: PublisherConfig, quickMode: boolean = false): Promise<void> {
   console.log('📚 Blog Publisher');
-  console.log('==================\n');
+  console.log('==================');
+  if (quickMode) {
+    console.log('⚡ Quick mode: reusing existing images');
+  }
+  console.log('');
 
   // Check pandoc
   if (!isPandocAvailable()) {
@@ -76,9 +82,11 @@ async function publish(config: PublisherConfig): Promise<void> {
   // Clean existing posts for full regeneration
   cleanPosts(config.outputPath);
 
-  // Create temp directory for media extraction
+  // Create temp directory for media extraction (only needed in full mode)
   const tempDir = path.join(config.outputPath, '.temp');
-  fs.mkdirSync(tempDir, { recursive: true });
+  if (!quickMode) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
 
   // Process each document
   let successCount = 0;
@@ -89,38 +97,55 @@ async function publish(config: PublisherConfig): Promise<void> {
     console.log(`  📝 Processing: ${docName}`);
 
     try {
-      // Create temp media dir for this document
-      const docTempDir = path.join(tempDir, slugify(docName));
-      fs.mkdirSync(docTempDir, { recursive: true });
-
-      // Convert to markdown
-      const result = await convertDocxToMarkdown(docPath, docTempDir);
-
-      // Build metadata
+      // Build metadata first to get the slug
+      const quickMarkdown = await convertDocxToMarkdownOnly(docPath);
       const metadata = buildPostMetadata(
         docPath,
         config.metadataPath,
-        result.markdown
+        quickMarkdown
       );
 
-      // Generate Jekyll post
-      const postPath = generatePost(
-        config.outputPath,
-        metadata,
-        result.markdown,
-        result.images,
-        docTempDir
-      );
+      // Check if images already exist for this post
+      const existingImagesDir = path.join(config.outputPath, 'assets', 'images', metadata.slug);
+      const hasExistingImages = fs.existsSync(existingImagesDir) && 
+        fs.readdirSync(existingImagesDir).length > 0;
 
-      console.log(`     ✅ Generated: ${path.basename(postPath)}`);
+      if (quickMode && hasExistingImages) {
+        // Quick mode: just regenerate markdown, reuse existing images
+        const postPath = generatePostQuick(
+          config.outputPath,
+          metadata,
+          quickMarkdown,
+          metadata.slug
+        );
 
-      if (result.images.length > 0) {
-        console.log(`     📷 Extracted ${result.images.length} image(s)`);
-      }
+        console.log(`     ✅ Generated: ${path.basename(postPath)}`);
+        console.log(`     ⚡ Reused existing images`);
+      } else {
+        // Full mode: extract images
+        const docTempDir = path.join(tempDir, slugify(docName));
+        fs.mkdirSync(docTempDir, { recursive: true });
 
-      if (result.warnings.length > 0) {
-        for (const warning of result.warnings) {
-          console.log(`     ⚠️  ${warning}`);
+        const result = await convertDocxToMarkdown(docPath, docTempDir);
+
+        const postPath = generatePost(
+          config.outputPath,
+          metadata,
+          result.markdown,
+          result.images,
+          docTempDir
+        );
+
+        console.log(`     ✅ Generated: ${path.basename(postPath)}`);
+
+        if (result.images.length > 0) {
+          console.log(`     📷 Extracted ${result.images.length} image(s)`);
+        }
+
+        if (result.warnings.length > 0) {
+          for (const warning of result.warnings) {
+            console.log(`     ⚠️  ${warning}`);
+          }
         }
       }
 
@@ -172,7 +197,9 @@ async function main(): Promise<void> {
   };
 
   // Parse command
-  const command = process.argv[2];
+  const args = process.argv.slice(2);
+  const quickMode = args.includes('--quick') || args.includes('-q');
+  const command = args.find(arg => !arg.startsWith('-'));
 
   if (command === 'init') {
     console.log('🔧 Initializing Jekyll site structure...');
@@ -180,7 +207,7 @@ async function main(): Promise<void> {
     console.log('\n✅ Done! You can now add Word documents to /documente and run:');
     console.log('   npm run publish');
   } else {
-    await publish(config);
+    await publish(config, quickMode);
   }
 }
 

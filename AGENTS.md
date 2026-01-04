@@ -57,12 +57,32 @@ npm install
 # Build TypeScript
 npm run build
 
-# Publish documents (convert Word docs → Jekyll site)
+# Publish documents (full rebuild - extracts all images, slow)
 npm run publish
+
+# Quick rebuild (reuses existing images, fast)
+npm run quick
 
 # Development mode (run without building)
 npm run dev
 ```
+
+### CLI Flags
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--quick` | `-q` | Quick mode: skip image extraction, reuse existing images |
+| `init` | | Initialize Jekyll site structure only |
+
+**When to use quick mode:**
+- Editing text content in Word documents (no new images)
+- Fixing typos or formatting
+- Testing markdown conversion changes
+
+**When to use full publish:**
+- Adding new Word documents
+- Adding or changing images in existing documents
+- First-time setup
 
 ## Workflow
 
@@ -109,7 +129,8 @@ Handles Word document conversion:
 
 - `isPandocAvailable()` - Checks if Pandoc is installed
 - `isLibreOfficeAvailable()` - Checks if LibreOffice is installed
-- `convertDocxToMarkdown(docxPath, mediaDir)` - Converts .docx to Markdown using Pandoc
+- `convertDocxToMarkdown(docxPath, mediaDir)` - Converts .docx to Markdown using Pandoc (full mode with image extraction)
+- `convertDocxToMarkdownOnly(docxPath)` - Converts .docx to Markdown without extracting images (quick mode)
 - `convertEmfToPng(emfPath)` - Converts Windows metafiles (ISIS Draw, etc.) to PNG
 - `extractTitleFromMarkdown(markdown)` - Extracts first heading as title
 - `slugify(text)` - Creates URL-friendly slugs
@@ -148,7 +169,8 @@ Manages metadata from multiple sources:
 Generates the Jekyll site:
 
 - `initJekyllSite(config)` - Creates Jekyll directory structure and base files
-- `generatePost(outputPath, metadata, markdown, images, tempMediaDir)` - Creates a blog post
+- `generatePost(outputPath, metadata, markdown, images, tempMediaDir)` - Creates a blog post (full mode)
+- `generatePostQuick(outputPath, metadata, markdown, slug)` - Creates a blog post reusing existing images (quick mode)
 - `cleanPosts(outputPath)` - Removes existing posts for full regeneration
 - `fixImagePaths(markdown, slug, tempMediaDir)` - Converts temp paths to Jekyll asset paths
 

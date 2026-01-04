@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc",
     "publish": "node dist/main.js",
+    "quick": "node dist/main.js --quick",
     "dev": "tsx src/publish/main.ts"
   },
   "devDependencies": {

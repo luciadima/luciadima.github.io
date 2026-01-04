@@ -95,10 +95,11 @@ export async function convertDocxToMarkdown(
   // --extract-media: extracts images to the specified directory
   // --wrap=none: don't wrap lines (better for web)
   // --mathml: convert math to MathML (works well with MathJax)
+  // -t html: output HTML instead of markdown (kramdown doesn't support grid tables)
   const args = [
     docxPath,
     '-f', 'docx',
-    '-t', 'markdown',
+    '-t', 'html',
     '--extract-media', mediaDir,
     '--wrap=none',
     '--mathml',
@@ -179,9 +180,8 @@ export async function convertDocxToMarkdown(
       // Fix image paths in markdown to be relative to assets folder
       let markdown = stdout;
 
-      // Remove blockquote markers (> at start of lines)
-      // Word documents often get incorrectly converted to blockquotes
-      markdown = markdown.replace(/^>\s?/gm, '');
+      // Remove blockquote markers (> at start of lines) - not needed for HTML output
+      // markdown = markdown.replace(/^>\s?/gm, '');
 
       // Clean up Pandoc artifacts
       // Remove escaped dots (ellipsis) - convert \... to regular dots
@@ -191,30 +191,6 @@ export async function convertDocxToMarkdown(
       // Remove raw HTML comments from Pandoc
       markdown = markdown.replace(/`<!-- -->`\{=html\}/g, '');
       markdown = markdown.replace(/<!-- -->/g, '');
-
-      // Ensure blank line after inline math that ends a line (prevents MathJax from bleeding into next line)
-      markdown = markdown.replace(/\$\n([A-Za-z])/g, '$\n\n$1');
-
-      // Wrap math in HTML tags that kramdown won't process
-      // This prevents kramdown from stripping curly braces like {CH}
-
-      // First convert display math $$...$$ to HTML div
-      markdown = markdown.replace(/\$\$([^$]+)\$\$/g, '<div class="math display">\\[$1\\]</div>');
-
-      // Then convert inline math $...$ to HTML span (but not $$)
-      markdown = markdown.replace(/(?<!\$)\$(?!\$)([^$]+)(?<!\$)\$(?!\$)/g, '<span class="math inline">\\($1\\)</span>');
-
-      // Add line breaks (two spaces before newline) for lines that should stay separate
-      // Lines starting with numbers followed by text should have proper breaks before them
-      markdown = markdown.replace(/\n(\d+[^\d\.])/g, '  \n$1');
-
-      // Convert numbered lists to use proper sequential numbering and headings
-      // Replace markdown lists with bold headings to avoid kramdown list-breaking issues
-      let questionNumber = 0;
-      markdown = markdown.replace(/^(\d+)\.\s+\*\*/gm, () => {
-        questionNumber++;
-        return `### ${questionNumber}. **`;
-      });
 
       // Replace media paths with Jekyll-friendly paths
       // Pandoc outputs: ![](mediaDir/media/image1.png)
@@ -264,4 +240,54 @@ export function slugify(text: string): string {
     .replace(/[^a-z0-9]+/g, '-')     // Replace non-alphanumeric with hyphens
     .replace(/^-+|-+$/g, '')          // Remove leading/trailing hyphens
     .substring(0, 50);                // Limit length
+}
+
+/**
+ * Convert a Word document to Markdown WITHOUT extracting images (fast mode)
+ * Used for quick rebuilds when images already exist
+ */
+export async function convertDocxToMarkdownOnly(docxPath: string): Promise<string> {
+  const args = [
+    docxPath,
+    '-f', 'docx',
+    '-t', 'html',
+    '--wrap=none',
+    '--mathml',
+  ];
+
+  return new Promise((resolve, reject) => {
+    const pandoc = spawn('pandoc', args);
+
+    let stdout = '';
+    let stderr = '';
+
+    pandoc.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+
+    pandoc.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+
+    pandoc.on('close', (code) => {
+      if (code !== 0) {
+        reject(new Error(`Pandoc failed with code ${code}: ${stderr}`));
+        return;
+      }
+
+      let markdown = stdout;
+
+      // Clean up Pandoc artifacts
+      markdown = markdown.replace(/\\\.{3}/g, '...');
+      markdown = markdown.replace(/\\\./g, '.');
+      markdown = markdown.replace(/`<!-- -->`\{=html\}/g, '');
+      markdown = markdown.replace(/<!-- -->/g, '');
+
+      resolve(markdown);
+    });
+
+    pandoc.on('error', (error) => {
+      reject(new Error(`Failed to spawn pandoc: ${error.message}`));
+    });
+  });
 }
