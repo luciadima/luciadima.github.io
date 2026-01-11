@@ -160,33 +160,3 @@ main().catch((error) => {
   console.error('Fatal error:', error);
   process.exit(1);
 });
-
-
-/* =============================================================================
- * COMMENTED OUT: Original DOCX to HTML conversion code
- * =============================================================================
- *
- * import {
- *   convertDocxToMarkdown,
- *   convertDocxToMarkdownOnly,
- *   isPandocAvailable,
- * } from './converter.js';
- * import { generatePost, generatePostQuick } from './generator.js';
- *
- * function findDocuments(documentsPath: string): string[] {
- *   if (!fs.existsSync(documentsPath)) {
- *     console.error(`❌ Documents folder not found: ${documentsPath}`);
- *     return [];
- *   }
- *   const files = fs.readdirSync(documentsPath);
- *   return files
- *     .filter(f => f.toLowerCase().endsWith('.docx') && !f.startsWith('~$'))
- *     .map(f => path.join(documentsPath, f));
- * }
- *
- * async function publish(config: PublisherConfig, quickMode: boolean = false): Promise<void> {
- *   // ... original DOCX processing code ...
- * }
- *
- * =============================================================================
- */

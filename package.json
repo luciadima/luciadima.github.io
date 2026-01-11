@@ -1,12 +1,11 @@
 {
   "name": "blog-publisher",
   "version": "1.0.0",
-  "description": "Convert Word documents to Jekyll blog posts for GitHub Pages",
+  "description": "Publish PDF documents as Jekyll blog posts for GitHub Pages",
   "type": "module",
   "scripts": {
     "build": "tsc",
     "publish": "node dist/main.js",
-    "quick": "node dist/main.js --quick",
     "dev": "tsx src/publish/main.ts"
   },
   "devDependencies": {

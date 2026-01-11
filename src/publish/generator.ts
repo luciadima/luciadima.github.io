@@ -5,7 +5,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import type { PostMetadata, ExtractedImage, PublisherConfig } from './types.js';
+import type { PostMetadata, PublisherConfig } from './types.js';
 
 /**
  * Format a date as YYYY-MM-DD for Jekyll post filenames
@@ -37,68 +37,6 @@ function generateFrontMatter(metadata: PostMetadata): string {
 
   lines.push('---');
   return lines.join('\n');
-}
-
-/**
- * Escape Liquid syntax in markdown content
- * Chemistry formulas often contain {{ and }} which Jekyll interprets as Liquid variables
- */
-function escapeLiquidSyntax(markdown: string): string {
-  // Only escape {{ when it's a Liquid variable pattern, not LaTeX
-  // LaTeX uses {\command but Liquid uses {{variable}}
-  // We need to escape {{ when it appears in chemistry notation like {{KMnO}_{4}}
-  let result = markdown;
-
-  // Escape {{ when followed by a letter or backslash-space (chemistry patterns)
-  // But NOT when followed by \ and then a LaTeX command like \frac
-  result = result.replace(/\{\{([A-Za-z])/g, '{ {$1');
-  result = result.replace(/\{\{\\(\s)/g, '{ {\\$1');  // {{ followed by backslash-space
-  result = result.replace(/\{%/g, '{ %');
-
-  return result;
-}
-
-/**
- * Fix image paths in HTML to point to Jekyll assets folder
- * Also converts EMF references to PNG (since EMF files are converted)
- */
-function fixImagePaths(markdown: string, slug: string, tempMediaDir: string): string {
-  // Replace paths like ./temp/media/image1.png with /assets/images/slug/image1.png
-  const mediaPath = path.join(tempMediaDir, 'media').replace(/\\/g, '/');
-
-  // Handle both relative and absolute temp paths
-  let result = markdown;
-
-  // Replace the temp media path with Jekyll assets path
-  result = result.replace(
-    new RegExp(escapeRegExp(mediaPath), 'g'),
-    `/assets/images/${slug}`
-  );
-
-  // Handle HTML img src attributes with media/ paths
-  // Pandoc HTML output: <img src="media/image1.png" ... />
-  result = result.replace(
-    /src="media\//g,
-    `src="/assets/images/${slug}/`
-  );
-
-  // Also handle Markdown image syntax just in case
-  result = result.replace(
-    /!\[([^\]]*)\]\(media\//g,
-    `![$1](/assets/images/${slug}/`
-  );
-
-  // Convert .emf references to .png (since we convert EMF files to PNG)
-  result = result.replace(/\.emf"/g, '.png"');
-  result = result.replace(/\.wmf"/g, '.png"');
-  result = result.replace(/\.emf\)/g, '.png)');
-  result = result.replace(/\.wmf\)/g, '.png)');
-
-  return result;
-}
-
-function escapeRegExp(string: string): string {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /**
@@ -359,52 +297,6 @@ title: Home
 }
 
 /**
- * Generate a Jekyll post from converted content
- */
-export function generatePost(
-  outputPath: string,
-  metadata: PostMetadata,
-  markdown: string,
-  images: ExtractedImage[],
-  tempMediaDir: string
-): string {
-  // Create post filename: YYYY-MM-DD-slug.md
-  const dateStr = formatDateForFilename(metadata.createdDate);
-  const filename = `${dateStr}-${metadata.slug}.md`;
-  const postPath = path.join(outputPath, '_posts', filename);
-
-  // Create images directory for this post
-  const imagesDir = path.join(outputPath, 'assets', 'images', metadata.slug);
-  if (images.length > 0) {
-    fs.mkdirSync(imagesDir, { recursive: true });
-
-    // Copy images
-    for (const image of images) {
-      const imagePath = path.join(imagesDir, image.filename);
-      fs.writeFileSync(imagePath, image.data);
-    }
-  }
-
-  // Fix image paths in markdown
-  const fixedMarkdown = fixImagePaths(markdown, metadata.slug, tempMediaDir);
-
-  // Escape Liquid syntax (chemistry formulas use {{ }})
-  const escapedMarkdown = escapeLiquidSyntax(fixedMarkdown);
-
-  // Generate full post content
-  const frontMatter = generateFrontMatter(metadata);
-  const postContent = `${frontMatter}
-
-${escapedMarkdown}
-`;
-
-  // Write post file
-  fs.writeFileSync(postPath, postContent, 'utf-8');
-
-  return postPath;
-}
-
-/**
  * Clean up the _posts directory (for full regeneration)
  */
 export function cleanPosts(outputPath: string): void {
@@ -452,60 +344,6 @@ export function generatePdfPost(
   if (!fs.existsSync(postsDir)) {
     fs.mkdirSync(postsDir, { recursive: true });
   }
-
-  // Write post file
-  fs.writeFileSync(postPath, postContent, 'utf-8');
-
-  return postPath;
-}
-
-/**
- * Generate a Jekyll post in quick mode (reusing existing images)
- */
-export function generatePostQuick(
-  outputPath: string,
-  metadata: PostMetadata,
-  markdown: string,
-  slug: string
-): string {
-  // Create post filename: YYYY-MM-DD-slug.md
-  const dateStr = formatDateForFilename(metadata.createdDate);
-  const filename = `${dateStr}-${metadata.slug}.md`;
-  const postPath = path.join(outputPath, '_posts', filename);
-
-  // Fix image paths - use the existing images directory pattern
-  // Handle HTML img src attributes with media/ paths (Pandoc HTML output)
-  let fixedMarkdown = markdown.replace(
-    /src="media\//g,
-    `src="/assets/images/${slug}/`
-  );
-
-  // Also handle Markdown image syntax
-  fixedMarkdown = fixedMarkdown.replace(
-    /!\[([^\]]*)\]\([^)]*media\/([^)]+)\)/g,
-    `![$1](/assets/images/${slug}/$2)`
-  );
-
-  fixedMarkdown = fixedMarkdown.replace(
-    /!\[([^\]]*)\]\(\.\/[^)]*\/media\/([^)]+)\)/g,
-    `![$1](/assets/images/${slug}/$2)`
-  );
-
-  // Convert .emf/.wmf references to .png
-  fixedMarkdown = fixedMarkdown.replace(/\.emf"/g, '.png"');
-  fixedMarkdown = fixedMarkdown.replace(/\.wmf"/g, '.png"');
-  fixedMarkdown = fixedMarkdown.replace(/\.emf\)/g, '.png)');
-  fixedMarkdown = fixedMarkdown.replace(/\.wmf\)/g, '.png)');
-
-  // Escape Liquid syntax
-  const escapedMarkdown = escapeLiquidSyntax(fixedMarkdown);
-
-  // Generate full post content
-  const frontMatter = generateFrontMatter(metadata);
-  const postContent = `${frontMatter}
-
-${escapedMarkdown}
-`;
 
   // Write post file
   fs.writeFileSync(postPath, postContent, 'utf-8');

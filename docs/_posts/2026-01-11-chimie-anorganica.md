@@ -1,8 +1,8 @@
 ---
 layout: post
 title: "Chimie anorganică"
-date: 2026-01-11T18:08:00.307Z
-last_modified_at: 2026-01-11T18:08:00.307Z
+date: 2026-01-11T18:09:06.000Z
+last_modified_at: 2026-01-11T18:09:06.000Z
 author: "Lucia Dima"
 categories: ["chimie"]
 ---

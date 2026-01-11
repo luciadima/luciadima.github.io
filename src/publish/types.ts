@@ -36,26 +36,6 @@ export interface MetadataOverride {
   summary?: string;
 }
 
-/** Result of converting a Word document */
-export interface ConversionResult {
-  /** The markdown content */
-  markdown: string;
-  /** Extracted images with their paths */
-  images: ExtractedImage[];
-  /** Any warnings during conversion */
-  warnings: string[];
-}
-
-/** An image extracted from a Word document */
-export interface ExtractedImage {
-  /** Original filename or generated name */
-  filename: string;
-  /** Image data as buffer */
-  data: Buffer;
-  /** MIME type */
-  mimeType: string;
-}
-
 /** Git history information for a file */
 export interface GitFileInfo {
   /** Date of first commit containing this file */
