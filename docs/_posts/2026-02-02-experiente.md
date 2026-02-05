@@ -2,7 +2,7 @@
 layout: post
 title: "Experiențe"
 date: 2026-02-02T00:00:00.000Z
-last_modified_at: 2026-02-05T18:45:30.454Z
+last_modified_at: 2026-02-05T18:46:04.000Z
 author: "Lucia Dima"
 categories: ["chimie"]
 ---
